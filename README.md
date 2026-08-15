@@ -157,7 +157,7 @@ Local HTTPS certificate files used for secure camera access during local develop
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/YOUR-USERNAME/synthrium-fruit-vegetable-detector.git
+gh repo clone cit-23-02-0104-creator/AI-fruit-vegetable-detection
 ```
 
 Navigate into the project:
