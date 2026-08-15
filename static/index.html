@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Synthrium AI</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --bg: #FFFFFF;
+            --text: #111827;
+            --text-sub: #6B7280;
+            --accent: #2563EB;
+            --accent-hover: #1D4ED8;
+            --border: #E5E7EB;
+            --radius: 14px;
+            --transition: 0.2s ease;
+        }
+
+        html,
+        body {
+            height: 100%;
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            -webkit-font-smoothing: antialiased;
+            overflow: hidden;
+        }
+
+        /* ── Home Screen ─────────────────────────────────── */
+        #home-screen {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            padding: 32px 24px;
+            gap: 48px;
+        }
+
+        .brand {
+            text-align: center;
+        }
+
+        .brand h1 {
+            font-size: 28px;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            margin-bottom: 8px;
+        }
+
+        .brand p {
+            font-size: 15px;
+            color: var(--text-sub);
+        }
+
+        .actions {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            width: 100%;
+            max-width: 340px;
+        }
+
+        .action-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            width: 100%;
+            padding: 18px 24px;
+            border: 2px solid var(--border);
+            border-radius: var(--radius);
+            background: var(--bg);
+            font-family: inherit;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text);
+            cursor: pointer;
+            transition: all var(--transition);
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .action-btn:active {
+            transform: scale(0.97);
+        }
+
+        .action-btn.primary {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #fff;
+        }
+
+        .action-btn.primary:hover {
+            background: var(--accent-hover);
+        }
+
+        .action-btn:not(.primary):hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .action-btn svg {
+            width: 22px;
+            height: 22px;
+            flex-shrink: 0;
+        }
+
+        /* ── Result Screen ───────────────────────────────── */
+        #result-screen {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: #F9FAFB;
+            z-index: 200;
+            flex-direction: column;
+        }
+
+        #result-screen.active {
+            display: flex;
+        }
+
+        .result-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            background: #fff;
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+
+        .result-header h2 {
+            font-size: 17px;
+            font-weight: 700;
+        }
+
+        .back-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: none;
+            border: none;
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--accent);
+            cursor: pointer;
+            padding: 8px 12px;
+            border-radius: 8px;
+        }
+
+        .result-body {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: auto;
+            padding: 16px;
+        }
+
+        #result-canvas {
+            max-width: 100%;
+            max-height: 100%;
+            border-radius: 10px;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+        }
+
+        .result-footer {
+            padding: 14px 20px;
+            background: #fff;
+            border-top: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-shrink: 0;
+            overflow-x: auto;
+        }
+
+        .det-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            background: #F3F4F6;
+            border-radius: 100px;
+            font-size: 13px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .det-chip .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        /* ── Camera Fullscreen ───────────────────────────── */
+        #camera-screen {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: #000;
+            z-index: 300;
+            overflow: hidden;
+        }
+
+        #camera-screen.active {
+            display: block;
+        }
+
+        /* Video is hidden — we draw it onto the canvas */
+        #camera-video {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+            width: 0;
+            height: 0;
+        }
+
+        #camera-canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        .camera-top-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            padding-top: max(16px, env(safe-area-inset-top));
+            background: linear-gradient(180deg, rgba(0, 0, 0, 0.5) 0%, transparent 100%);
+            z-index: 10;
+        }
+
+        .cam-close-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border: none;
+            color: #fff;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .cam-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #fff;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .cam-status .live-dot {
+            width: 8px;
+            height: 8px;
+            background: #EF4444;
+            border-radius: 50%;
+            animation: blink 1s ease infinite;
+        }
+
+        @keyframes blink {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.3;
+            }
+        }
+
+        /* ── Loader ──────────────────────────────────────── */
+        .loader-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(255, 255, 255, 0.9);
+            z-index: 500;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .loader-overlay.active {
+            display: flex;
+        }
+
+        .spinner {
+            width: 36px;
+            height: 36px;
+            border: 3px solid #E5E7EB;
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .loader-overlay span {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-sub);
+        }
+
+        /* ── Modal ───────────────────────────────────────── */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.4);
+            z-index: 400;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #fff;
+            width: 100%;
+            max-width: 400px;
+            max-height: 80vh;
+            border-radius: var(--radius);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            animation: modalIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes modalIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px) scale(0.95);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 18px 24px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .modal-header h3 {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-sub);
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all var(--transition);
+        }
+
+        .modal-close:hover {
+            background: #F3F4F6;
+            color: var(--text);
+        }
+
+        .modal-body {
+            padding: 24px;
+            overflow-y: auto;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .item-tag {
+            padding: 6px 14px;
+            background: #F3F4F6;
+            border-radius: 100px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text);
+            border: 1px solid transparent;
+            transition: all var(--transition);
+        }
+
+        .item-tag:hover {
+            border-color: var(--border);
+            background: #fff;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        #file-input {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Home -->
+    <div id="home-screen">
+        <div class="brand">
+            <img src="/static/Logo.png" alt="Synthrium Logo"
+                style="height: 60px; width: auto; margin-bottom: 16px; border-radius: 12px;">
+            <h1>Synthrium</h1>
+            <p id="home-subtitle" style="font-weight: 500; color: var(--accent);">Fruits and Vegitable Detection</p>
+        </div>
+        <div class="actions">
+            <button class="action-btn primary" onclick="openCamera()">
+                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z" />
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0Z" />
+                </svg>
+                Open Camera
+            </button>
+            <button class="action-btn" onclick="document.getElementById('file-input').click()">
+                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M2.25 15.75l5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0 0 22.5 18.75V5.25A2.25 2.25 0 0 0 20.25 3H3.75A2.25 2.25 0 0 0 1.5 5.25v13.5A2.25 2.25 0 0 0 3.75 21Z" />
+                </svg>
+                Upload Photo
+            </button>
+            <button class="action-btn" onclick="openItemsModal()"
+                style="background: transparent; border-color: transparent; color: var(--accent); font-size: 14px; padding: 12px; margin-top: -4px;">
+                View Supported Items
+            </button>
+        </div>
+        <input type="file" id="file-input" accept="image/*">
+    </div>
+
+    <!-- Items Modal -->
+    <div class="modal-overlay" id="items-modal" onclick="if(event.target===this) closeItemsModal()">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Supported Items</h3>
+                <button class="modal-close" onclick="closeItemsModal()">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body" id="items-list">
+                <!-- Items injected by JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Result -->
+    <div id="result-screen">
+        <div class="result-header">
+            <button class="back-btn" onclick="closeResult()">
+                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                </svg>
+                Back
+            </button>
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <img src="/static/Logo.png" alt="Synthrium Logo" style="height: 24px; border-radius: 6px;">
+                <h2 style="font-size: 16px; font-weight: 700;">Synthrium</h2>
+            </div>
+            <div id="result-title" style="font-size: 14px; color: var(--text-sub); width:60px; text-align: right;">
+                Detection</div>
+        </div>
+        <div class="result-body">
+            <canvas id="result-canvas"></canvas>
+        </div>
+        <div class="result-footer" id="result-footer"></div>
+    </div>
+
+    <!-- Camera -->
+    <div id="camera-screen">
+        <video id="camera-video" autoplay playsinline muted></video>
+        <canvas id="camera-canvas"></canvas>
+        <div class="camera-top-bar">
+            <button class="cam-close-btn" onclick="closeCamera()">
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+            <div
+                style="display: flex; align-items: center; gap: 8px; background: rgba(0,0,0,0.4); padding: 4px 12px; border-radius: 20px;">
+                <img src="/static/Logo.png" alt="Synthrium Logo" style="height: 20px; border-radius: 4px;">
+                <span style="color: #fff; font-size: 14px; font-weight: 700;">Synthrium</span>
+            </div>
+            <div class="cam-status">
+                <div class="live-dot"></div>
+                <span id="cam-det-count">Scanning...</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loader -->
+    <div class="loader-overlay" id="loader">
+        <div class="spinner"></div>
+        <span>Analyzing...</span>
+    </div>
+
+    <script>
+        // ── Colors ────────────────────────────────────────────
+        const COLORS = ['#2563EB', '#DC2626', '#16A34A', '#F59E0B', '#7C3AED', '#EC4899', '#06B6D4', '#EA580C', '#4F46E5', '#65A30D'];
+        const colorMap = {};
+        let colorIdx = 0;
+        function getColor(cls) {
+            if (!colorMap[cls]) colorMap[cls] = COLORS[colorIdx++ % COLORS.length];
+            return colorMap[cls];
+        }
+
+        // ── Supported Items Modal ─────────────────────────────
+        const SUPPORTED_ITEMS = {
+            fruit: [
+                "Apple", "Avocado", "Broccoli", "Cabbage", "Carrot",
+                "Cauliflower", "Corn", "Cucumber", "Eggplant", "Garlic", "Grape",
+                "Kiwi", "Lemon", "Mango", "Melon", "Onion", "Orange", "Peach",
+                "Pear", "Pineapple", "Pomegranate", "Potato", "Pumpkin",
+                "Strawberry", "Tomato", "Watermelon", "Zucchini"
+            ]
+        };
+
+        let currentModel = 'fruit';
+
+        // ── Navigation & History ──────────────────────────────
+        function showScreen(screenId) {
+            // Hide everything
+            document.getElementById('home-screen').style.display = 'none';
+            document.getElementById('result-screen').classList.remove('active');
+
+            if (document.getElementById('camera-screen').classList.contains('active') && screenId !== 'camera') {
+                stopCameraLogic();
+            }
+            document.getElementById('camera-screen').classList.remove('active');
+
+            // Show requested
+            if (screenId === 'result') {
+                document.getElementById('result-screen').classList.add('active');
+            } else if (screenId === 'camera') {
+                document.getElementById('camera-screen').classList.add('active');
+            } else {
+                document.getElementById('home-screen').style.display = 'flex';
+            }
+        }
+
+        function navigateTo(screenId) {
+            location.hash = screenId;
+        }
+
+        window.addEventListener('hashchange', () => {
+            const screenId = location.hash.replace('#', '') || 'home';
+            showScreen(screenId);
+        });
+
+        window.addEventListener('DOMContentLoaded', () => {
+            if (!location.hash || location.hash === '#selection') {
+                location.replace('#home');
+            } else {
+                showScreen(location.hash.replace('#', ''));
+            }
+        });
+
+        function openItemsModal() {
+            const listDiv = document.getElementById('items-list');
+            listDiv.innerHTML = '';
+            SUPPORTED_ITEMS[currentModel].forEach(item => {
+                const tag = document.createElement('div');
+                tag.className = 'item-tag';
+                tag.textContent = item;
+                listDiv.appendChild(tag);
+            });
+            document.getElementById('items-modal').classList.add('active');
+        }
+
+        function closeItemsModal() {
+            document.getElementById('items-modal').classList.remove('active');
+        }
+
+        function roundRect(ctx, x, y, w, h, r) {
+            ctx.beginPath();
+            ctx.moveTo(x + r, y); ctx.lineTo(x + w - r, y);
+            ctx.quadraticCurveTo(x + w, y, x + w, y + r); ctx.lineTo(x + w, y + h - r);
+            ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h); ctx.lineTo(x + r, y + h);
+            ctx.quadraticCurveTo(x, y + h, x, y + h - r); ctx.lineTo(x, y + r);
+            ctx.quadraticCurveTo(x, y, x + r, y); ctx.closePath();
+        }
+
+        // ── Upload ────────────────────────────────────────────
+        document.getElementById('file-input').addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            document.getElementById('loader').classList.add('active');
+
+            const img = new Image();
+            img.onload = async () => {
+                const canvas = document.getElementById('result-canvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                ctx.drawImage(img, 0, 0);
+
+                const formData = new FormData();
+                formData.append('file', file);
+                try {
+                    const res = await fetch('/api/detect', { method: 'POST', body: formData });
+                    const data = await res.json();
+                    if (data.error) { alert(data.error); return; }
+
+                    const sx = img.width / data.image_width;
+                    const sy = img.height / data.image_height;
+                    drawBoxes(ctx, data.detections, sx, sy, 0, 0);
+
+                    const footer = document.getElementById('result-footer');
+                    footer.innerHTML = '';
+                    data.detections.forEach(d => {
+                        const c = getColor(d.class);
+                        footer.innerHTML += `<div class="det-chip"><span class="dot" style="background:${c}"></span>${d.class} ${(d.confidence * 100).toFixed(0)}%</div>`;
+                    });
+                    document.getElementById('result-title').textContent = `${data.count} Detected`;
+                    navigateTo('result');
+                } catch (err) { alert('Error: ' + err.message); }
+                finally { document.getElementById('loader').classList.remove('active'); }
+            };
+            img.src = URL.createObjectURL(file);
+            e.target.value = '';
+        });
+
+        function closeResult() {
+            history.back();
+        }
+
+        // ── Draw boxes (shared) ──────────────────────────────
+        function drawBoxes(ctx, detections, sx, sy, offsetX, offsetY) {
+            detections.forEach(d => {
+                const x1 = d.x1 * sx + offsetX;
+                const y1 = d.y1 * sy + offsetY;
+                const x2 = d.x2 * sx + offsetX;
+                const y2 = d.y2 * sy + offsetY;
+                const bw = x2 - x1, bh = y2 - y1;
+                const color = getColor(d.class);
+
+                // Tinted fill
+                ctx.fillStyle = color + '18';
+                ctx.fillRect(x1, y1, bw, bh);
+
+                // Border
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 3;
+                ctx.strokeRect(x1, y1, bw, bh);
+
+                // Corner brackets (white for contrast)
+                const cl = Math.min(24, bw * 0.22, bh * 0.22);
+                ctx.lineWidth = 5;
+                ctx.strokeStyle = '#FFFFFF';
+                ctx.beginPath();
+                ctx.moveTo(x1, y1 + cl); ctx.lineTo(x1, y1); ctx.lineTo(x1 + cl, y1);
+                ctx.moveTo(x2 - cl, y1); ctx.lineTo(x2, y1); ctx.lineTo(x2, y1 + cl);
+                ctx.moveTo(x1, y2 - cl); ctx.lineTo(x1, y2); ctx.lineTo(x1 + cl, y2);
+                ctx.moveTo(x2 - cl, y2); ctx.lineTo(x2, y2); ctx.lineTo(x2, y2 - cl);
+                ctx.stroke();
+
+                // Colored corner brackets on top
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.moveTo(x1, y1 + cl); ctx.lineTo(x1, y1); ctx.lineTo(x1 + cl, y1);
+                ctx.moveTo(x2 - cl, y1); ctx.lineTo(x2, y1); ctx.lineTo(x2, y1 + cl);
+                ctx.moveTo(x1, y2 - cl); ctx.lineTo(x1, y2); ctx.lineTo(x1 + cl, y2);
+                ctx.moveTo(x2 - cl, y2); ctx.lineTo(x2, y2); ctx.lineTo(x2, y2 - cl);
+                ctx.stroke();
+
+                // Label
+                const label = `${d.class} ${(d.confidence * 100).toFixed(0)}%`;
+                const fontSize = Math.max(14, Math.min(22, bw * 0.09));
+                ctx.font = `bold ${fontSize}px Inter, sans-serif`;
+                const tw = ctx.measureText(label).width;
+                const lh = fontSize + 12;
+                const ly = Math.max(y1 - lh - 4, 0);
+
+                ctx.fillStyle = color;
+                roundRect(ctx, x1, ly, tw + 16, lh, 6);
+                ctx.fill();
+
+                ctx.fillStyle = '#FFFFFF';
+                ctx.fillText(label, x1 + 8, ly + lh - 6);
+            });
+        }
+
+        // ── Camera ────────────────────────────────────────────
+        let cameraStream = null;
+        let detecting = false;
+        let frameLoop = null;
+        let latestDetections = null;
+
+        async function openCamera() {
+            try {
+                cameraStream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } }
+                });
+                const video = document.getElementById('camera-video');
+                video.srcObject = cameraStream;
+                navigateTo('camera');
+                detecting = true;
+                latestDetections = null;
+                video.onloadedmetadata = () => { renderLoop(); sendFrameLoop(); };
+            } catch (err) {
+                alert('Camera access denied: ' + err.message);
+            }
+        }
+
+        function closeCamera() {
+            history.back();
+        }
+
+        function stopCameraLogic() {
+            detecting = false;
+            if (frameLoop) cancelAnimationFrame(frameLoop);
+            if (cameraStream) { cameraStream.getTracks().forEach(t => t.stop()); cameraStream = null; }
+            document.getElementById('camera-video').srcObject = null;
+            latestDetections = null;
+        }
+
+        // Render loop — draws video + boxes every frame onto canvas
+        function renderLoop() {
+            if (!detecting) return;
+
+            const video = document.getElementById('camera-video');
+            const canvas = document.getElementById('camera-canvas');
+            const ctx = canvas.getContext('2d');
+            const container = document.getElementById('camera-screen');
+
+            const sw = container.clientWidth;
+            const sh = container.clientHeight;
+
+            // Set canvas internal resolution to screen size
+            if (canvas.width !== sw || canvas.height !== sh) {
+                canvas.width = sw;
+                canvas.height = sh;
+            }
+
+            const vw = video.videoWidth;
+            const vh = video.videoHeight;
+
+            if (vw > 0 && vh > 0) {
+                // Cover-fit: fill screen, crop overflow
+                const screenRatio = sw / sh;
+                const videoRatio = vw / vh;
+                let drawW, drawH, drawX, drawY;
+
+                if (videoRatio > screenRatio) {
+                    drawH = sh;
+                    drawW = sh * videoRatio;
+                    drawX = (sw - drawW) / 2;
+                    drawY = 0;
+                } else {
+                    drawW = sw;
+                    drawH = sw / videoRatio;
+                    drawX = 0;
+                    drawY = (sh - drawH) / 2;
+                }
+
+                // Draw the video frame
+                ctx.drawImage(video, drawX, drawY, drawW, drawH);
+
+                // Draw bounding boxes
+                if (latestDetections && latestDetections.detections && latestDetections.detections.length > 0) {
+                    const sx = drawW / latestDetections.image_width;
+                    const sy = drawH / latestDetections.image_height;
+                    drawBoxes(ctx, latestDetections.detections, sx, sy, drawX, drawY);
+                }
+            }
+
+            frameLoop = requestAnimationFrame(renderLoop);
+        }
+
+        // Send frames to API at intervals
+        let pendingRequest = false;
+        let lastSend = 0;
+        const INTERVAL = 1000;
+
+        function sendFrameLoop() {
+            if (!detecting) return;
+
+            const video = document.getElementById('camera-video');
+            const now = Date.now();
+
+            if (now - lastSend >= INTERVAL && !pendingRequest && video.videoWidth > 0) {
+                lastSend = now;
+                pendingRequest = true;
+
+                const cap = document.createElement('canvas');
+                cap.width = video.videoWidth;
+                cap.height = video.videoHeight;
+                cap.getContext('2d').drawImage(video, 0, 0);
+
+                cap.toBlob(async (blob) => {
+                    if (!blob || !detecting) { pendingRequest = false; return; }
+                    const form = new FormData();
+                    form.append('file', blob, 'f.jpg');
+                    try {
+                        const res = await fetch('/api/detect-frame', { method: 'POST', body: form });
+                        const data = await res.json();
+                        if (!detecting) return;
+                        latestDetections = data;
+                        if (data.detections && data.detections.length > 0) {
+                            document.getElementById('cam-det-count').textContent = `${data.count} detected`;
+                        } else {
+                            document.getElementById('cam-det-count').textContent = 'Scanning...';
+                        }
+                    } catch (e) { console.error(e); }
+                    finally { pendingRequest = false; }
+                }, 'image/jpeg', 0.75);
+            }
+
+            setTimeout(sendFrameLoop, 200);
+        }
+    </script>
+</body>
+
+</html>
